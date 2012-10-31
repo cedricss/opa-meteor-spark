@@ -1,4 +1,4 @@
-opa-meteor-spark
-================
+### Meteor Spark support in Opa
 
-Meteor Spark support in Opa
+    make
+    ./spark.js
