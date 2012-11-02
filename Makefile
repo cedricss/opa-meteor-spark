@@ -1,7 +1,7 @@
-OPA ?= opa --js-bypass-syntax jsdoc
+OPA ?= opa --js-bypass-syntax jsdoc 
 
-all: plugins/spark.js resources/spark.js spark.opa
-	$(OPA) plugins/spark.js spark.opa
+main.js: plugins/spark.js plugins/context.js resources/spark.js spark.opa main.opa
+	$(OPA) plugins/spark.js plugins/context.js spark.opa main.opa
 
 meteor:
 	 git clone https://github.com/meteor/meteor.git
@@ -9,4 +9,5 @@ meteor:
 resources/spark.js: meteor
 	./make_spark.js
 
-
+run: main.js
+	./main.js

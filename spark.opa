@@ -23,53 +23,72 @@ private function import_spark(string name) {
 
 import_spark("resources/spark.js");
 
+type Context.context = external
 
 module Spark {
 
 	function render(htmlFunc) {
 		(%% Spark.render %%)(htmlFunc)
 	}
-
 	function isolate(htmlFunc) {
 		(%% Spark.isolate %%)(htmlFunc)
 	}
-
 }
 
-module Reactive {
+client module Context {
 
-	module Var {
-
-		function render(htmlFunc) {
-			Spark.render({
-				function() Spark.isolate(htmlFunc)
-			})
-		}
+	function get() {
+		(%% Context.get %%)()
+	}
+	function getId(context) {
+		(%% Context.getId %%)(context)
+	}
+	function onInvalidate(context, callback) {
+		(%% Context.onInvalidate %%)(context, callback)
+	}
+	function invalidate(context) {
+		(%% Context.invalidate %%)(context)
 	}
 }
 
-getTemp = %% Spark.getTemp %%
-setTemp = %% Spark.setTemp %%
+client module Reactive {
 
-client function init_client(_){
-	Scheduler.timer(100, { function()
-		setTemp("{Random.int(30)+10}")
-	})
-	frag = Reactive.Var.render({ function()
-		"<h2>The current temperature is {getTemp()} C</h2>"
-	})
-	_ = Dom.put_inside(#main, Dom.to_selection(frag));
-	void
+	function render(htmlFunc) {
+		function f(){
+			Xhtml.to_string(htmlFunc())
+		}
+		frag = Spark.render({
+			function() Spark.isolate(f)
+		})
+		id = Xhtml.new_id()
+		function replace(_) {
+			ignore(Dom.put_replace(#{id}, Dom.to_selection(frag)));
+		}
+		<div id=#{id} onready={replace}/>
+	}
 }
 
-function page() {
-	<div id=#main onready={init_client}/>
-}
+module makeReactive(v) {
 
-Server.start(
-	Server.http,
-	{title:"Spark", page:page}
-)
+ 	value = Mutable.make(v)
+	ctx = Mutable.make(@unsafe_cast(void))
+	is_active_ctx = Mutable.make(false)
+
+ 	client function get() {
+ 	  	ctx.set(Context.get())
+ 	  	is_active_ctx.set(true)
+ 	  	// todo: context.onInvalidate()
+ 	  	value.get()
+ 	}
+
+ 	client function set(n) {
+ 	  	value.set(n)
+ 	  	if(is_active_ctx.get() == true) {
+ 	  		Context.invalidate(ctx.get())
+ 	  	}
+ 	}
+
+}
 
 
 

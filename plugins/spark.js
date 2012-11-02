@@ -1,4 +1,6 @@
 /** @externType dom_element */
+/** @externType xhtml */
+/** @externType Context.context */
 
 /**
  *  @register { ( -> string ) -> dom_element }
@@ -13,24 +15,6 @@ function render(htmlFunc) {
 function isolate(htmlFunc) {
 	return Spark.isolate(htmlFunc);
 }
-
-// --------------
-// WIP
-
-/* @module Context */
-
-function getCurrent() {
-	return Meteor.deps.Context.current;
-}
-
-/**
- * @register { int }
- */
- function getCurrentId() {
- 	
- }
-
-// --------------
 
 /* 
   Just some tests:
