@@ -23,21 +23,7 @@ function init_client(_){
 	        //WIP: <ul>{my_list}</ul>
 
 	#main = html
-/**
-	html =
-		Reactive.renderList(cursor, { function(item)
-			"<li>{item.value}</li>"
-		}, { function() "<p>Empty</p>" })
 
-	for(0, { function(i)
-		Cursor.getCallback().added(item(i), i);
-		i+1;
-	}, { function(i) i < 10 });
-
-
-	#main = html
-*/
-	void
 }
 
 function page() {
