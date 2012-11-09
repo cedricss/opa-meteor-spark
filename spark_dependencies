@@ -9,3 +9,4 @@ universal-events/events-w3c.js
 domutils/domutils.js
 spark/spark.js
 spark/patch.js
+logging/logging.js

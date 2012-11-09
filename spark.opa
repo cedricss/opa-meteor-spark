@@ -33,6 +33,15 @@ module Spark {
 	function isolate(htmlFunc) {
 		(%% Spark.isolate %%)(htmlFunc)
 	}
+/**	function labelBranch(id, htmlFunc) {
+		(%% Spark.labelBranch %%)(id, htmlFunc)
+	}
+	function list(cursor, itemFunc, elseFunc) {
+		(%% Spark.list %%)(cursor, itemFunc, elseFunc)
+	}
+*/
+	labelBranch = %% Spark.labelBranch %%
+	list = %% Spark.list %%
 }
 
 client module Context {
@@ -49,51 +58,87 @@ client module Context {
 	function invalidate(context) {
 		(%% Context.invalidate %%)(context)
 	}
+
+	empty = %% Context.empty %%
 }
 
 client module Reactive {
 
-	function render(htmlFunc) {
-		function f(){
-			Xhtml.to_string(htmlFunc())
-		}
-		frag = Spark.render({
-			function() Spark.isolate(f)
-		})
+	private function placeholder(frag) {
 		id = Xhtml.new_id()
 		function replace(_) {
 			ignore(Dom.put_replace(#{id}, Dom.to_selection(frag)));
 		}
 		<div id=#{id} onready={replace}/>
 	}
+
+	function render(htmlFunc) {
+		function f(){
+			Xhtml.to_string(htmlFunc())
+		}
+		Spark.render({
+			function() Spark.isolate(f)
+		})
+		|> placeholder
+	}
+
+	function renderList(cursor, itemFunc, elseFunc) {
+  		Spark.render(function () {
+    		Spark.list(cursor, function (item) {
+      			Spark.labelBranch(item._id,
+      				function () {
+        				Spark.isolate({ function() jlog(item.value); itemFunc(item) });
+	      			})
+    			}, elseFunc
+		    )
+  		})
+  		|> placeholder
+	}
+
 }
 
-module makeReactive(v) {
+type reactive('a) = {
+	(->'a) get,
+	('a->{}) set
+}
 
- 	value = Mutable.make(v)
-	ctx = Mutable.make(@unsafe_cast(void))
-	is_active_ctx = Mutable.make(false)
+type reactive_list('a) = {
+	Cursor.t('a) cursor,
+	('a->string) htmlFunc,
+	(->string) emptyFunc
+}
+
+client ctx = Mutable.make(Context.empty)
+
+('a->reactive('a)) module makeReactive(v) {
+
+	private value = Mutable.make(v)
 
  	client function get() {
  	  	ctx.set(Context.get())
- 	  	is_active_ctx.set(true)
  	  	// todo: context.onInvalidate()
  	  	value.get()
  	}
 
  	client function set(n) {
  	  	value.set(n)
- 	  	if(is_active_ctx.get() == true) {
- 	  		Context.invalidate(ctx.get())
- 	  	}
+ 	  	Context.invalidate(ctx.get())
  	}
 
 }
 
+// TODO: xhtml instead of string
+(Cursor.t('a), ('a->string), (->string) -> reactive_list('a)) module makeReactiveList(c, f, e) {
+	cursor = c
+	htmlFunc = f
+	emptyFunc = e
+}
 
+@xmlizer(reactive('a)) function reactive_to_xml(alpha_to_xml, r) {
+	Reactive.render({ function() alpha_to_xml(r.get()) })
+}
 
-
-
-
-
+@xmlizer(reactive_list('a)) function reactive_list_to_xml(_alpha_to_xml, r) {
+	Reactive.renderList(r.cursor, r.htmlFunc, r.emptyFunc)
+}
 

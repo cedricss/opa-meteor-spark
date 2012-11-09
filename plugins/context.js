@@ -25,3 +25,8 @@ function onInvalidate(context, callback) {
 function invalidate(context) {
     context.invalidate();
 }
+
+/**
+ * @register { Context.context }
+ */
+ var empty = null

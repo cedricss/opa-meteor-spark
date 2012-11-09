@@ -1,6 +1,8 @@
 /** @externType dom_element */
 /** @externType xhtml */
 /** @externType Context.context */
+/** @opaType Cursor.t('a) */
+
 
 /**
  *  @register { ( -> string ) -> dom_element }
@@ -14,6 +16,20 @@ function render(htmlFunc) {
  */
 function isolate(htmlFunc) {
 	return Spark.isolate(htmlFunc);
+}
+
+/**
+ * @register { string, ( -> string) -> string }
+ */
+function labelBranch(id, htmlFunc) {
+  return Spark.labelBranch(id, htmlFunc);
+}
+
+/**
+ * @register { Cursor.t('a), ('a -> string), ( -> string) -> string }
+ */
+function list(cursor, itemFunc, elseFunc) {
+  return Spark.list(cursor, itemFunc, elseFunc); 
 }
 
 /* 
