@@ -9,22 +9,34 @@ type Cursor.t('a) = {
 	(Cursor.callback('a) -> void) observe,
 }
 
-type v = { string _id, string value }
+client module MakeCursor() {
 
-client module Cursor {
+	new_id = Fresh.client(identity)
 
-    Mutable.t(Cursor.callback(v)) callback =
-    	Mutable.make(@unsafe_cast(void))
+    cb_map = Mutable.make(IntMap.empty)
 
 	function observe(cb) {
-		callback.set(cb)
+		cb_map.set(Map.add(new_id(), cb, cb_map.get()))
 	}
 
-	function getCallback() {
-		callback.get()
+	function cb(f) {
+		Map.iter({ function(_,cb) f(cb) }, cb_map.get())
 	}
 
+	function added(v, index) {
+		cb(_.added(v, index))
+	}
+
+	function moved(v, from, to) {
+		cb(_.moved(v, from, to))
+	}
+
+	function changed(v, index) {
+		cb(_.changed(v, index))
+	}
+
+	function removed(v, index) {
+		cb(_.removed(v, index))
+	}
 }
 
-
-Cursor.t('a) cursor = { observe : Cursor.observe }

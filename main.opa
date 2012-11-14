@@ -1,31 +1,40 @@
-function item(pos) {
-	{ _id : "{pos}", value : "{pos} - {Random.string(10)}" }
-}
-
-reactive_list({string _id, string value}) my_list = {
-	~cursor,
-	htmlFunc : function(item) {	"<li>{item.value}</li>"	},
-	emptyFunc : function() { "<p>Empty</p>" }
-}
-
 function init_client(_){
 
 	temp = makeReactive(0)
 
-	Scheduler.timer(1000, { function()
+	function item(pos) {
+		{ _id : "{pos}", value : "{pos} - {Random.string(10)}" }
+	}
+
+	cursor = MakeCursor()
+
+	reactive_list({string _id, string value}) my_list = {
+		cursor: { observe : cursor.observe },
+		htmlFunc : function(item) {	"<li>{item.value}</li>"	},
+		emptyFunc : function() { "<p>Empty</p>" }
+	}
+
+	Scheduler.timer(100, { function()
 		temp.set(Random.int(30)+10)
 
 		pos = Random.int(8)
-		Cursor.getCallback().changed(item(pos), pos)
+		void
+		cursor.changed(item(pos), pos)
 	})
 
 
-	html1 =	<>The current temperature is {temp} C</>
-
-	html = <h1>{html1}</h1><h2>{html1}</h2>
-           //<ul>{my_list}</ul>
+	html_temp =	<>The current temperature is {temp} C</>
+	html_list = <>{my_list}</>
+	html = <ul>{html_list}</ul><ul>{html_list}</ul>
+		   <h1>{html_temp}</h1><h2>{html_temp}</h2>
 
 	#main = html
+
+	for(0, { function(i)
+		cursor.added(item(i), i);
+		i+1;
+	}, { function(i) i < 10 })
+	|> ignore
 
 	void
 }
@@ -41,8 +50,3 @@ Server.start(
 	{title:"Spark", page:page}
 )
 
-for(0, { function(i)
-	//Cursor.getCallback().added(item(i), i);
-	i+1;
-}, { function(i) i < 10 })
-|> ignore

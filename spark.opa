@@ -35,6 +35,7 @@ module Spark {
 	isolate 		= %% Spark.isolate %%
 	labelBranch 	= %% Spark.labelBranch %%
 	list 			= %% Spark.list %%
+	// todo: move to stdlib
 	function replace_f(position, item_f){
 		Dom.to_selection(
 			%% Spark.replace_f %%(Dom.of_selection(position), { function() item_f() } )
@@ -78,7 +79,7 @@ client module Reactive {
     		Spark.list(cursor, function (item) {
       			Spark.labelBranch(item._id,
       				function () {
-        				Spark.isolate({ function() jlog(item.value); itemFunc(item) });
+        				Spark.isolate({ function() itemFunc(item) });
 	      			})
     			}, elseFunc
 		    )
