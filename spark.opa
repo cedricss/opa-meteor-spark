@@ -23,14 +23,23 @@ private function import_spark(string name) {
 
 import_spark("resources/spark.js");
 
-type Context.context = external
+type Context.t = external
 
 module Spark {
 
 	render 			= %% Spark.render %%
+	function render_f(htmlFunc) {
+		function f() { render(htmlFunc) }
+		f
+	}
 	isolate 		= %% Spark.isolate %%
 	labelBranch 	= %% Spark.labelBranch %%
 	list 			= %% Spark.list %%
+	function replace_f(position, item_f){
+		Dom.to_selection(
+			%% Spark.replace_f %%(Dom.of_selection(position), { function() item_f() } )
+		)
+	}
 }
 
 client module Context {
@@ -44,26 +53,28 @@ client module Context {
 
 client module Reactive {
 
-	private function placeholder(frag) {
-		id = Xhtml.new_id()
+  	@both_implem unique_class = String.fresh(200)
+
+	private function placeholder((->dom_element) frag) {
+		class = unique_class()
 		function replace(_) {
-			ignore(Dom.put_replace(#{id}, Dom.to_selection(frag)));
+			ignore(Spark.replace_f(Dom.select_class(class), frag));
 		}
-		<div id=#{id} onready={replace}/>
+		<div class={[class]} onready={replace}/>
 	}
 
 	function render(htmlFunc) {
 		function f(){
 			Xhtml.to_string(htmlFunc())
 		}
-		Spark.render({
+		Spark.render_f({
 			function() Spark.isolate(f)
 		})
 		|> placeholder
 	}
 
 	function renderList(cursor, itemFunc, elseFunc) {
-  		Spark.render(function () {
+  		Spark.render_f(function () {
     		Spark.list(cursor, function (item) {
       			Spark.labelBranch(item._id,
       				function () {
@@ -88,21 +99,22 @@ type reactive_list('a) = {
 	(->string) emptyFunc
 }
 
-client ctx = Mutable.make(Context.empty)
+client ctx_map = Mutable.make(intmap(Context.t) IntMap.empty)
 
 ('a->reactive('a)) module makeReactive(v) {
 
 	private value = Mutable.make(v)
 
  	client function get() {
- 	  	ctx.set(Context.get())
+ 		ctx = Context.get()
+ 	  	ctx_map.set(Map.add(Context.getId(ctx), ctx, ctx_map.get()))
  	  	// todo: context.onInvalidate()
  	  	value.get()
  	}
 
  	client function set(n) {
  	  	value.set(n)
- 	  	Context.invalidate(ctx.get())
+ 	  	Map.iter({ function(_, value) Context.invalidate(value)}, ctx_map.get())
  	}
 
 }

@@ -14,16 +14,20 @@ function init_client(_){
 
 	Scheduler.timer(1000, { function()
 		temp.set(Random.int(30)+10)
-		//pos = Random.int(8)
-		//Cursor.getCallback().changed(item(pos), pos)
+
+		pos = Random.int(8)
+		Cursor.getCallback().changed(item(pos), pos)
 	})
 
 
-	html =	<h2>The current temperature is {temp} C</h2>
-	        //WIP: <ul>{my_list}</ul>
+	html1 =	<>The current temperature is {temp} C</>
+
+	html = <h1>{html1}</h1><h2>{html1}</h2>
+           //<ul>{my_list}</ul>
 
 	#main = html
 
+	void
 }
 
 function page() {

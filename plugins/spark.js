@@ -1,6 +1,5 @@
 /** @externType dom_element */
 /** @externType xhtml */
-/** @externType Context.context */
 /** @opaType Cursor.t('a) */
 
 
@@ -30,6 +29,16 @@ function labelBranch(id, htmlFunc) {
  */
 function list(cursor, itemFunc, elseFunc) {
   return Spark.list(cursor, itemFunc, elseFunc); 
+}
+
+/**
+ * @register {dom_element, (->dom_element) -> dom_element}
+ */
+function replace_f(to, f) {
+    var result = to.replaceWith(f);
+    //BslClientOnly_Dom_flush_all(to);
+    //BslClientOnly_Dom_flush_all(item);
+    return result;
 }
 
 /* 
