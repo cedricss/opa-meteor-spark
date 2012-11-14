@@ -27,39 +27,19 @@ type Context.context = external
 
 module Spark {
 
-	function render(htmlFunc) {
-		(%% Spark.render %%)(htmlFunc)
-	}
-	function isolate(htmlFunc) {
-		(%% Spark.isolate %%)(htmlFunc)
-	}
-/**	function labelBranch(id, htmlFunc) {
-		(%% Spark.labelBranch %%)(id, htmlFunc)
-	}
-	function list(cursor, itemFunc, elseFunc) {
-		(%% Spark.list %%)(cursor, itemFunc, elseFunc)
-	}
-*/
-	labelBranch = %% Spark.labelBranch %%
-	list = %% Spark.list %%
+	render 			= %% Spark.render %%
+	isolate 		= %% Spark.isolate %%
+	labelBranch 	= %% Spark.labelBranch %%
+	list 			= %% Spark.list %%
 }
 
 client module Context {
 
-	function get() {
-		(%% Context.get %%)()
-	}
-	function getId(context) {
-		(%% Context.getId %%)(context)
-	}
-	function onInvalidate(context, callback) {
-		(%% Context.onInvalidate %%)(context, callback)
-	}
-	function invalidate(context) {
-		(%% Context.invalidate %%)(context)
-	}
-
-	empty = %% Context.empty %%
+	getId 			= %% Context.getId %%
+	get 			= %% Context.get %%
+	onInvalidate 	= %% Context.onInvalidate %%
+	invalidate 		= %% Context.invalidate %%
+	empty 			= %% Context.empty %%
 }
 
 client module Reactive {
