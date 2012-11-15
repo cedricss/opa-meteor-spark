@@ -7,14 +7,14 @@
  *  @register { ( -> string ) -> dom_element }
  */
 function render(htmlFunc) {
-	return Spark.render(htmlFunc);
+  return Spark.render(htmlFunc);
 }
 
 /**
  * @register { ( -> string ) -> string }
  */
 function isolate(htmlFunc) {
-	return Spark.isolate(htmlFunc);
+  return Spark.isolate(htmlFunc);
 }
 
 /**
@@ -85,12 +85,12 @@ W = new Weather()
  * @register { (->string) }
  */
 function getTemp() {
-	return W.getTemp();
+  return W.getTemp();
 }
 
 /**
  * @register { (string->void) }
  */
 function setTemp(v) {
-	W.setTemp(v);
+  W.setTemp(v);
 }
