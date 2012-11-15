@@ -23,8 +23,8 @@ module Test(temp, my_list) {
 }
 
 module Template {
-    function empty_list() { "<p>Empty</p>" }
-    function item(item) { "<li>{item.value}</li>" }
+    function empty_list() { <p>Empty</p> }
+    function item(item) { <li>{item.value}</li> }
 }
 
 function init_client(_){

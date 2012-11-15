@@ -16,8 +16,8 @@ type Reactive.value('a) = {
 
 type Reactive.list('a) = {
     Cursor.t('a) cursor,
-    ('a->string) htmlFunc,
-    (->string) emptyFunc,
+    ('a->xhtml) itemFunc,
+    (->xhtml) emptyFunc,
     ('a, int -> void) add,
     ('a, int, int -> void) move,
     ('a, int -> void) change,
@@ -38,25 +38,24 @@ client module Reactive {
             <div class={[class]} onready={replace}/>
         }
 
+        xts = Xhtml.to_string
+        function `@>>`(g,f) {
+            function() { f(g()) }
+        }
+
         function value(htmlFunc) {
-            function f(){
-                Xhtml.to_string(htmlFunc())
-            }
-            Spark.render_f({
-                function() Spark.isolate(f)
-            })
+            function() { Spark.isolate(htmlFunc @>> xts) }
+            |> Spark.render_f
             |> placeholder
         }
 
         function list(cursor, itemFunc, elseFunc) {
             Spark.render_f(function () {
                 Spark.list(cursor, function (item) {
-                    Spark.labelBranch(item._id,
-                        function () {
-                            Spark.isolate({ function() itemFunc(item) });
-                        })
-                    }, elseFunc
-                )
+                    Spark.labelBranch(item._id, function () {
+                        Spark.isolate({ function() itemFunc(item) } @>> xts);
+                    })
+                }, (elseFunc @>> xts))
             })
             |> placeholder
         }
@@ -82,7 +81,7 @@ client module Reactive {
         {~get, ~set}
     }
 
-    (list('a), ('a->string), (->string) -> Reactive.list('a)) function list(_init, htmlFunc, emptyFunc) {
+    (list('a), ('a->xhtml), (->xhtml) -> Reactive.list('a)) function list(_init, itemFunc, emptyFunc) {
 
         new_id = Fresh.client(identity)
 
@@ -114,7 +113,7 @@ client module Reactive {
             cb(_.removed(v, index))
         }
 
-        { ~cursor, ~htmlFunc, ~emptyFunc, ~add, ~move, ~change, ~remove}
+        { ~cursor, ~itemFunc, ~emptyFunc, ~add, ~move, ~change, ~remove}
 
     }
 }
@@ -124,5 +123,5 @@ client module Reactive {
 }
 
 @xmlizer(Reactive.list('a)) function reactive_list_to_xml(_alpha_to_xml, r) {
-    Reactive.Render.list(r.cursor, r.htmlFunc, r.emptyFunc)
+    Reactive.Render.list(r.cursor, r.itemFunc, r.emptyFunc)
 }
