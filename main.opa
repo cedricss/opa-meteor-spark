@@ -1,40 +1,55 @@
+import stdlib.themes.bootstrap
+
+module Template {
+
+	function empty_list() {
+		"<p>Empty</p>"
+	}
+
+	function item(item) {
+		"<li>{item.value}</li>"
+	}
+}
+
 function init_client(_){
 
-	temp = makeReactive(0)
+	temp = Reactive.value(0)
+
+	my_list = Reactive.list(
+		[],
+		Template.item,
+		Template.empty_list
+	)
+
+	html_temp =	<>The current temperature is {temp} C</>
+	html_list = <>{my_list}</>
+
+	html = 	<div class="container">
+		   	<div class="well">
+		   		<h2>{html_temp}</h2><h3>{html_temp}</h3>
+		    </div>
+			<div class="row">
+				<ul class="span4 offset2">{html_list}</ul><ul class="span4">{html_list}</ul>
+			</div>
+		    </div>
+
+	#main = html
 
 	function item(pos) {
 		{ _id : "{pos}", value : "{pos} - {Random.string(10)}" }
 	}
 
-	cursor = MakeCursor()
-
-	reactive_list({string _id, string value}) my_list = {
-		cursor: { observe : cursor.observe },
-		htmlFunc : function(item) {	"<li>{item.value}</li>"	},
-		emptyFunc : function() { "<p>Empty</p>" }
-	}
-
-	Scheduler.timer(100, { function()
-		temp.set(Random.int(30)+10)
-
-		pos = Random.int(8)
-		void
-		cursor.changed(item(pos), pos)
-	})
-
-
-	html_temp =	<>The current temperature is {temp} C</>
-	html_list = <>{my_list}</>
-	html = <ul>{html_list}</ul><ul>{html_list}</ul>
-		   <h1>{html_temp}</h1><h2>{html_temp}</h2>
-
-	#main = html
-
 	for(0, { function(i)
-		cursor.added(item(i), i);
+		my_list.add(item(i), i);
 		i+1;
 	}, { function(i) i < 10 })
 	|> ignore
+
+	Scheduler.timer(100, { function()
+		temp.set(Random.int(30)+10)
+		pos = Random.int(10)
+		my_list.change(item(pos), pos)
+	})
 
 	void
 }
