@@ -25,7 +25,7 @@ import_spark("resources/spark.js");
 
 type Context.t = external
 
-module Spark {
+client module Spark {
 
     render          = %% Spark.render %%
     function render_f(htmlFunc) {
@@ -35,7 +35,7 @@ module Spark {
     isolate         = %% Spark.isolate %%
     labelBranch     = %% Spark.labelBranch %%
     list            = %% Spark.list %%
-    // todo: move to stdlib
+
     function replace_f(position, item_f){
         Dom.to_selection(
             %% Spark.replace_f %%(Dom.of_selection(position), { function() item_f() } )

@@ -1,56 +1,69 @@
 import stdlib.themes.bootstrap
+//import stdlib.meteor.spark
 
-module Test(temp, my_list) {
+server initialized = Mutable.make(false)
+client module Test(temp) {
+
+    private function item(pos) { { _id : "{pos}", value : "{pos} - {Random.base64(10)}" } }
+
+    function init() {
+        //if(initialized.get() == false) {
+           for(0, { function(i)
+            void my_list.add(item(i), i);
+            i+1;  }, _ < 10) |> ignore
+            initialized.set(true);
+        //}
+    }
 
     function start() {
-
-        function item(pos) {
-            { _id : "{pos}", value : "{pos} - {Random.string(10)}" }
-        }
-
-        for(0, { function(i)
-            void my_list.add(item(i), i);
-            i+1;
-        }, _ < 10)
-        |> ignore
-
-        Scheduler.timer(100, { function()
+        function test() {
             void temp.set(Random.int(30)+10)
             pos = Random.int(10)
             my_list.change(item(pos), pos)
-        })
+
+        }
+        init();
+        test();
+        Scheduler.timer(500, test)
     }
 }
 
 module Template {
+
     function empty_list() { <p>Empty</p> }
-    function item(item) { <li>{item.value}</li> }
+    function item(item) { <tr><td class="highlight">{item.value}</td></tr> }
 }
 
-function init_client(_){
-
-    temp = Reactive.value(0)
-    my_list = Reactive.list([], Template.item, Template.empty_list)
-
-    html_temp = <>The current temperature is {temp} C</>
-    html_list = <>{my_list}</>
-
-    html =  <div class="container">
-                <div class="well"><h2>{html_temp}</h2><h3>{html_temp}</h3></div>
-                <div class="row"><ul class="span4 offset2">{html_list}</ul><ul class="span4">{html_list}</ul></div>
-            </div>
-
-    #main = html
-    Test(temp, my_list).start();
-}
+client temp = Reactive.make(0)
+client my_list = Reactive.List.make(list({string _id, string value}) [], Template.item, Template.empty_list)
 
 function page() {
-        <div id=#main2/>
-        <div id=#main onready={init_client}>
+
+    html_temp = <>The current temperature is { render(temp) } C</>
+    html_list = <>{ render_list(my_list) }</>;
+
+    <div class="navbar navbar-fixed-top">
+      <div class=navbar-inner>
+        <div class=container>
+          <a class=brand href="./index.html">Opa Meteor Spark</>
+          <button class="btn" onclick={ function(_) Test(temp).start() }><i class="icon-play"></i></button>
         </div>
+      </div>
+    </div>
+    <div class="container"><br/><br/>
+        <div class="well"><h2>{html_temp}</h2><h3>{html_temp}</h3></div>
+        <div class="row">
+            <div class="span4 offset2"><table class="table">{html_list}</table></div>
+            <div class="span4"><table class="table">{html_list}</table></div>
+        </div>
+    </div>
 }
 
 Server.start(
     Server.http,
-    {title:"Spark", page:page}
+    [
+        {register : { css : [ "/resources/css/style.css" ]} },
+        {resources:@static_resource_directory("resources") },
+        {title:"Spark", page:page}
+    ]
 )

@@ -1,6 +1,6 @@
-OPA ?= opa --js-bypass-syntax jsdoc 
+OPA ?= opa --js-bypass-syntax jsdoc
 
-main.js: plugins/spark.js plugins/context.js resources/spark.js spark.opa reactive.opa main.opa
+main.js: plugins/spark.js plugins/context.js resources/spark.js resources/css/style.css spark.opa reactive.opa main.opa
 	$(OPA) plugins/spark.js plugins/context.js spark.opa reactive.opa main.opa
 
 meteor:
