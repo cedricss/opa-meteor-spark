@@ -1,3 +1,5 @@
+package stdlib.meteor.spark
+
 private spark_resources = @static_include_directory("resources")
 
 private config = { DynamicResource.default_config with randomize : false }
@@ -51,7 +53,3 @@ client module Context {
     invalidate      = %% Context.invalidate %%
     empty           = %% Context.empty %%
 }
-
-
-
-

@@ -35,3 +35,7 @@
     -moz-animation-iteration-count: 1;
     -moz-animation-delay: 0, 0;
 }
+
+.navbar-fixed-top {
+    z-index: 10;
+}

@@ -3,10 +3,10 @@ set -e
 PCK_DIR="meteor/packages"
 COMPILER=/usr/local/bin/compiler.jar
 DEST="resources/spark.js"
-DEST_MINI="resources/spark-mini.js"
 
 rm $DEST || true
-echo "var Meteor = {};" > $DEST
+cat spark_header > $DEST
+echo "var Meteor = {};" >> $DEST
 cat spark_dependencies | while read LINE
 do
        echo $LINE
