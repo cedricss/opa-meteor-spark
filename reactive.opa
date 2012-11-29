@@ -99,7 +99,7 @@ module Reactive {
     */
     private function unserialize_error(json) { void @fail("Impossible to unserialize the reactive value: {json}"); none }
 
-    // Impossible to write a generic unserialize function (value restrictions problems)
+    // Impossible to write a generic unserialize function (value restrictions)
     private client function client_unserialize(alpha_unserialization, json) {
         match (json){
         case { Record : [ ("initial_value", alpha), ("id", { String : id }) ] } :
@@ -308,6 +308,10 @@ module Reactive {
 
             { ~cursor, ~itemFunc, ~emptyFunc, ~add, ~move, ~change, ~remove}
 
+        }
+
+        Reactive.list('a), ('a->xhtml), (->xhtml) -> Reactive.list('a) function clone(reactive, item_fun, empty_fun) {
+            { reactive with itemFunc:item_fun, emptyFunc:empty_fun }
         }
 
         function render(cursor_getter, (->('a->xhtml)) item_func_getter, (->(->xhtml)) empty_func_getter) {

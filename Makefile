@@ -1,7 +1,11 @@
-OPA ?= opa --js-bypass-syntax jsdoc
+OPA ?= opa --js-bypass-syntax jsdoc 
+DEMO_PATH=../opa-reactive-demos
 
-main.js: plugins/spark.js plugins/context.js resources/spark.js resources/css/style.css spark.opa reactive.opa main.opa
-	$(OPA) plugins/spark.js plugins/context.js spark.opa reactive.opa main.opa
+demo.js: $(DEMO_PATH) plugins/spark.js plugins/context.js resources/spark.js $(DEMO_PATH)/resources/css/style.css spark.opa reactive.opa $(DEMO_PATH)/demo.opa $(DEMO_PATH)/demos/*.opa
+	$(OPA) plugins/spark.js plugins/context.js spark.opa reactive.opa $(DEMO_PATH)/demos/*.opa $(DEMO_PATH)/demo.opa -o demo.js
+
+$(DEMO_PATH):
+	(cd .. && git clone https://github.com/cedricss/opa-reactive-demos && echo "\nPlease type make run again")
 
 meteor:
 	 git clone https://github.com/meteor/meteor.git
@@ -9,5 +13,5 @@ meteor:
 resources/spark.js: meteor make_spark.js spark_dependencies
 	./make_spark.js
 
-run: main.js
-	./main.js --js-renaming no
+run: demo.js
+	./demo.js --js-renaming no --js-cleaning no
