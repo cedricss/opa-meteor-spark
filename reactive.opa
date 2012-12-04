@@ -295,6 +295,13 @@ module Reactive {
         )
     }
 
+    function bind(dom dom, Dom.event.kind e, (Dom.event -> void) f) {
+        Scheduler.push(
+            { function() Dom.bind(dom, e, f) |> ignore }
+        )
+    }
+
+
     @xmlizer(Reactive.value('a)) function to_xml(('a->xhtml) _alpha_to_xml, r) {
         reactive_render(identity)(r)
     }
