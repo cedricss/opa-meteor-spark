@@ -147,8 +147,10 @@ module Reactive {
         function get() {
             ctx = Context.get()
             ctx_id = Context.getId(ctx)
-            Hashtbl.add(ctx_table, ctx_id, ctx)
-            Context.onInvalidate(ctx,{ function() Hashtbl.remove(ctx_table, ctx_id)})
+            if (ctx_id > -1) {
+                Hashtbl.add(ctx_table, ctx_id, ctx)
+                Context.onInvalidate(ctx,{ function() Hashtbl.remove(ctx_table, ctx_id)})
+            }
             v = value.get()
             v
         }
