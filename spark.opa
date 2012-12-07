@@ -1,4 +1,4 @@
-package stdlib.meteor.spark
+package stdlib.meteor.spark10
 
 private spark_resources = @static_include_directory("resources")
 
