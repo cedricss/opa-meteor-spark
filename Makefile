@@ -5,7 +5,7 @@ demo.js: $(DEMO_PATH) plugins/spark.js plugins/context.js resources/spark.js $(D
 	$(OPA) plugins/spark.js plugins/context.js spark.opa reactive.opa $(DEMO_PATH)/demos/*.opa $(DEMO_PATH)/demo.opa -o demo.js
 
 $(DEMO_PATH):
-	(cd .. && git clone https://github.com/cedricss/opa-reactive-demos && git checkout origin/wip && echo "\nPlease type make run again")
+	(cd .. && git clone https://github.com/cedricss/opa-reactive-demos && cd opa-reactive-demos && git checkout origin/wip && echo "\nPlease type make run again")
 
 meteor:
 	 git clone https://github.com/meteor/meteor.git
