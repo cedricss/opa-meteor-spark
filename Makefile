@@ -10,8 +10,8 @@ $(DEMO_PATH):
 meteor:
 	 git clone https://github.com/meteor/meteor.git
 
-resources/spark.js: meteor make_spark.js spark_dependencies
-	./make_spark.js
+#resources/spark.js: meteor make_spark.js spark_dependencies
+#	./make_spark.js
 
 run: demo.js
 	./demo.js --js-renaming no --js-cleaning no
