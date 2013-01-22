@@ -1,5 +1,5 @@
 /*
-    Copyright © 2012 MLstate
+    Copyright © 2012, 2013 MLstate
 
     This file is part of Opa.
 
@@ -41,7 +41,7 @@ type Cursor.t('a) = {
 type Cursor.network_message('a) =
     { ('a, int) added }
 or  { ('a, int) changed }
-or  { ('a, int) removed }
+or  { 'a removed }
 or  { ('a, int, int) moved }
 
 type Reactive.value('a) = {
@@ -51,6 +51,7 @@ type Reactive.value('a) = {
     (->'a) get_silently,
     ('a->{}) set_silently,
     ((xhtml->xhtml)->xhtml) render,
+    (('a->xhtml)->xhtml) render_value,
     OpaType.ty ty
 }
 
@@ -70,7 +71,11 @@ type Reactive.list('a) = {
     ('a, int, int -> void) move,
     (->int) length,
     ('a, int -> void) change,
-    ('a, int -> void) remove
+    ('a -> void) remove,
+    (->list('a)) get,
+    (list('a)->void) set,
+    (->bool) is_empty,
+    ('a->bool) mem,
 }
 
 private CoreList = List
@@ -183,14 +188,19 @@ module Reactive {
         }
 
         Reactive.value('a) self = {~id, ~get, ~set, ~get_silently, ~set_silently, ~ty,
-                function render(_){ <></> }
+                function render(_){ <></> },
+                function render_value(_){ <></> }
         }
 
         function self_render(html_fun) {
            render(html_fun)(self)
         }
 
-        self = { self with render:self_render }
+        function self_render_value(value_fun) {
+           render_value(value_fun)(self)
+        }
+
+        self = { self with render:self_render, render_value:self_render_value }
 
         Hashtbl.add(client_side_reactive_table, id, @unsafe_cast(self));
 
@@ -266,14 +276,19 @@ module Reactive {
         }
 
         self = {~id, ~get, ~set, ~get_silently, ~set_silently, ~ty,
-                function render(_){ <></> }
+                function render(_){ <></> },
+                function render_value(_){ <></> },
         }
 
         function self_render(html_fun) {
            render(html_fun)(self)
         }
 
-        { self with render:self_render }
+        function self_render_value(value_fun) {
+           render_value(value_fun)(self)
+        }
+
+        { self with render:self_render, render_value:self_render_value }
     }
 
     /**
@@ -295,6 +310,13 @@ module Reactive {
         Reactive.value('a) r = @unsafe_cast(get_or_make(id,none,@unsafe_cast(v)))
         x = xhtml_deco(XmlConvert.of_alpha_with_ty(ty,r.get()))
         Log.notice("html_func", "{Debug.dump(x)} / {Debug.dump(r.get())}")
+        x
+    }
+
+    client function default_value_func(string id, RPC.Json.json json, ty, ('a->xhtml) xhtml_deco) {
+        v = OpaSerialize.Json.unserialize_with_ty(json, ty) ? @fail
+        Reactive.value('a) r = @unsafe_cast(get_or_make(id,none,@unsafe_cast(v)))
+        x = xhtml_deco(r.get())
         x
     }
 
@@ -323,6 +345,16 @@ module Reactive {
             // this is why we store the type in r.ty and serialize by hand:
             json = OpaSerialize.partial_serialize(v, r.ty)
             @public_env(function() { default_html_func(r.id, json, r.ty, html_fun) })
+        )
+    }
+
+    function render_value(value_fun)(r) {
+        placeholder(
+            v = r.get_silently()
+            // Impossible to public_env with unknown 'a (cf EI)
+            // this is why we store the type in r.ty and serialize by hand:
+            json = OpaSerialize.partial_serialize(v, r.ty)
+            @public_env(function() { default_value_func(r.id, json, r.ty, value_fun) })
         )
     }
 
@@ -357,47 +389,85 @@ module Reactive {
         (list('a), ('a->xhtml), (->xhtml) -> Reactive.list('a)) function _make(init, itemFunc, emptyFunc) {
 
             cb_map = Mutable.make(StringMap.empty)
-            list_length = Mutable.make(0)
+            list = @unsafe_cast(Mutable.make(init))
 
-            function observe(cb) {
+            recursive function observe(cb) {
                 id = Random.base64_url(6)
-                CoreList.iteri( { function(i, v) cb.added(v, i) }, init)
-                list_length.set(CoreList.length(init))
+                CoreList.iteri(function(i, v) {add(v, i)}, init)
                 cb_map.set(Map.add(id, cb, cb_map.get()))
             }
 
-            cursor = { ~observe }
+            and cursor = { ~observe }
 
-            function cb(f) {
-                Map.iter({ function(key,cb) f(cb) }, cb_map.get())
+            and function cb(f) {
+                Map.iter({ function(_,cb) f(cb) }, cb_map.get())
             }
 
-            function length() {
-                list_length.get()
+            // function iter('a) iter() {
+            //   llarray = Hashtbl.bindings(list);
+            //   LowLevelArray.iter({ function(v) Context.invalidate(v.value)}, keys)
+            // }
+
+            and function length() {
+                CoreList.length(list.get()) // TODO put back the length ref for better performance
             }
 
-            function add(v, index) {
-                cb(_.added(v, index))
-                list_length.set(list_length.get()+1)
+            and function add(v, beforeIndex) {
+                cb(_.added(v, beforeIndex))
+                l = CoreList.insert_at(v, beforeIndex, list.get())
+                list.set(l)
             }
 
-            function push(v) {
-                add(v, length())
+            and function push(v) {
+                add(v, 0)
             }
 
-            function move(v, from, to) {
+            and function move(v, from, to) {
                 cb(_.moved(v, from, to))
+                l = CoreList.remove_at(from, list.get())
+                l = CoreList.insert_at(v, to, l)
+                list.set(l)
             }
 
-            function change(v, index) {
+            and function change(v, index) {
                 cb(_.changed(v, index))
+                l = CoreList.remove_at(index, list.get())
+                l = CoreList.insert_at(v, index, l) // TODO add a better List.replace in the stdlib
+                list.set(l)
             }
 
-            function remove(v, index) {
-                cb(_.removed(v, index))
+            and function remove(v) {
+                l = list.get()
+                match(CoreList.index(v, l)){
+                case {some:index}:
+                    cb(_.removed(v, index))
+                    l = CoreList.remove_at(index, l)
+                    list.set(l)
+                case {none}: Log.error("Meteor.spark", "Impossible to remove a value from a Reactive.list: unbound value {v}")
+                }
+
             }
 
-            { ~cursor, ~itemFunc, ~emptyFunc, ~length, ~add, ~push, ~move, ~change, ~remove }
+            and function get() {
+                list.get()
+            }
+
+            and function set(list('a) l) {
+              CoreList.iter(function(b) {
+                remove(b)
+              }, list.get()) // TODO: call a special remove that don't update the list ref (it's not necessary here)
+              CoreList.iter(push, l)
+            }
+
+            and function is_empty() {
+              list.get() == []
+            }
+
+            and function mem(x) {
+              CoreList.mem(x, list.get())
+            }
+
+            { ~cursor, ~itemFunc, ~emptyFunc, ~length, ~get, ~set, ~is_empty, ~mem, ~add, ~push, ~move, ~change, ~remove }
 
         }
 
@@ -457,7 +527,7 @@ module Reactive {
                 case { added : (v, index) }: list.add(v, index)
                 case { moved : (v, from, to) }: list.move(v, from, to)
                 case { changed : (v, index) }: list.change(v, index)
-                case { removed : (v, index) }: list.remove(v, index)
+                case { removed : v }: list.remove(v)
                 }
             }
 
@@ -479,8 +549,8 @@ module Reactive {
                 Network.broadcast({ changed : (v, index) }, network);
             }
 
-            client function remove(v, index) {
-                Network.broadcast({ removed : (v, index) }, network);
+            client function remove(v) {
+                Network.broadcast({ removed : v }, network);
             }
 
             { list with ~add, ~push, ~move, ~change, ~remove}
