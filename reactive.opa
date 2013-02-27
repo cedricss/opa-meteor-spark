@@ -389,11 +389,12 @@ module Reactive {
         (list('a), ('a->xhtml), (->xhtml) -> Reactive.list('a)) function _make(init, itemFunc, emptyFunc) {
 
             cb_map = Mutable.make(StringMap.empty)
-            list = @unsafe_cast(Mutable.make(init))
+            list = Mutable.make([])
 
             recursive function observe(cb) {
                 id = Random.base64_url(6)
                 CoreList.iteri(function(i, v) {add(v, i)}, init)
+                // TODO: call a special add that don't add one by one (we could do list.set(init))
                 cb_map.set(Map.add(id, cb, cb_map.get()))
             }
 

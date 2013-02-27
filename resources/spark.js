@@ -4010,7 +4010,6 @@ Spark.list = function (cursor, itemFunc, elseFunc) {
         var frag = Spark.render(_.bind(itemFunc, null, item));
         DomUtils.wrapFragmentForContainer(frag, outerRange.containerNode());
         var range = makeRange(Spark._ANNOTATION_LIST_ITEM, frag);
-
         if (! itemRanges.length) {
           Spark.finalize(outerRange.replaceContents(frag));
         } else if (beforeIndex === itemRanges.length) {
@@ -4018,12 +4017,12 @@ Spark.list = function (cursor, itemFunc, elseFunc) {
         } else {
           itemRanges[beforeIndex].insertBefore(frag);
         }
-
         itemRanges.splice(beforeIndex, 0, range);
       });
     },
 
     removed: function (item, atIndex) {
+      console.log("Remove "+item+" "+atIndex+" length:"+itemRanges.length)
       later(function () {
         if (itemRanges.length === 1) {
           var frag = Spark.render(elseFunc);
